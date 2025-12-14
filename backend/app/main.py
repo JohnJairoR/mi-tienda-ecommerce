@@ -1,6 +1,7 @@
-from .api.routes import payments_router  # This import is fine up top
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from app.api.routes.payments import router as payments_router
 from .config import settings
 from .database import engine, Base
 from .api.routes import (
@@ -10,9 +11,10 @@ from .api.routes import (
     orders_router
 )
 
-# --- CORRECTED ORDER: Define the 'app' instance first ---
-
+# =========================================================
 # Crear aplicación FastAPI
+# =========================================================
+
 app = FastAPI(
     title="Mi Tienda API",
     description="API REST para tienda e-commerce profesional",
@@ -21,28 +23,40 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# --- Now we can use 'app' to register middleware and routers ---
+# =========================================================
+# CORS CONFIGURATION (FIXED FOR VERCEL)
+# =========================================================
 
-# Configurar CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=[
+        "https://mi-tienda-ecommerce.vercel.app",  # ✅ Frontend Vercel
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Registrar rutas (including the new payments_router)
+# =========================================================
+# Registrar rutas
+# =========================================================
+
 app.include_router(auth_router, prefix="/api")
 app.include_router(products_router, prefix="/api")
 app.include_router(cart_router, prefix="/api")
 app.include_router(orders_router, prefix="/api")
-app.include_router(payments_router, prefix="/api") # Integrated successfully here
+app.include_router(payments_router, prefix="/api")
 
-# Crear tablas en la base de datos
-# Note: This is typically done at startup or via migrations, but it works here too.
+# =========================================================
+# Base de datos
+# =========================================================
+
+# ⚠️ Para producción se recomienda usar migraciones (Alembic)
 Base.metadata.create_all(bind=engine)
 
+# =========================================================
+# Endpoints base
+# =========================================================
 
 @app.get("/")
 def read_root():
@@ -62,6 +76,10 @@ def health_check():
         "environment": settings.ENVIRONMENT
     }
 
+# =========================================================
+# Run local
+# =========================================================
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
@@ -70,3 +88,4 @@ if __name__ == "__main__":
         port=8000,
         reload=settings.DEBUG
     )
+
