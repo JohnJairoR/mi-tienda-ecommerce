@@ -1,3 +1,4 @@
+from .api.routes import payments_router  # This import is fine up top
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .config import settings
@@ -9,8 +10,7 @@ from .api.routes import (
     orders_router
 )
 
-# Crear tablas en la base de datos
-Base.metadata.create_all(bind=engine)
+# --- CORRECTED ORDER: Define the 'app' instance first ---
 
 # Crear aplicación FastAPI
 app = FastAPI(
@@ -21,6 +21,8 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
+# --- Now we can use 'app' to register middleware and routers ---
+
 # Configurar CORS
 app.add_middleware(
     CORSMiddleware,
@@ -30,11 +32,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Registrar rutas
+# Registrar rutas (including the new payments_router)
 app.include_router(auth_router, prefix="/api")
 app.include_router(products_router, prefix="/api")
 app.include_router(cart_router, prefix="/api")
 app.include_router(orders_router, prefix="/api")
+app.include_router(payments_router, prefix="/api") # Integrated successfully here
+
+# Crear tablas en la base de datos
+# Note: This is typically done at startup or via migrations, but it works here too.
+Base.metadata.create_all(bind=engine)
+
 
 @app.get("/")
 def read_root():
