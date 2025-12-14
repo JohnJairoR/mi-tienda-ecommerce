@@ -1,11 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-import stripe
-from ...database import get_db
-from ...config import settings
-from ...api.dependencies import get_current_active_user
-from ...models.user import User
-from pydantic import BaseModel
+from app.database import get_db
+from app.config import settings
+from app.api.dependencies import get_current_active_user
+from app.models.user import User
+
 
 router = APIRouter(prefix="/payments", tags=["Payments"])
 
