@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     STRIPE_SECRET_KEY: str = ""
     STRIPE_PUBLISHABLE_KEY: str = ""
 
+    # Mercado Pago
+    MERCADOPAGO_ACCESS_TOKEN: str = ""
+    MERCADOPAGO_PUBLIC_KEY: str = ""
+
     # Application
     ENVIRONMENT: str = "development"
     DEBUG: bool = True

@@ -1,217 +1,281 @@
-from app.database import SessionLocal
-from app.models.product import Product
-from app.models.category import Category
+import requests
 
-db = SessionLocal()
+API_BASE = "https://mi-tienda-ecommerce.onrender.com/api"
+USERNAME = "admin@tienda.com"
+PASSWORD = "123456"
 
-print("🏪 Creando categorías y productos de ejemplo...")
-print("=" * 60)
 
-# Crear categorías
-categories_data = [
-    {"name": "Electrónica", "slug": "electronica", "description": "Dispositivos y gadgets tecnológicos"},
-    {"name": "Ropa", "slug": "ropa", "description": "Moda y vestimenta"},
-    {"name": "Hogar", "slug": "hogar", "description": "Artículos para el hogar"},
-    {"name": "Deportes", "slug": "deportes", "description": "Equipamiento deportivo"},
-    {"name": "Libros", "slug": "libros", "description": "Libros y literatura"},
-]
+def login():
+    print("🔐 Iniciando sesión...")
+    r = requests.post(
+        f"{API_BASE}/auth/login",
+        data={"username": USERNAME, "password": PASSWORD}
+    )
+    r.raise_for_status()
+    print("✅ Login exitoso")
+    return r.json()["access_token"]
 
-categories = {}
-for cat_data in categories_data:
-    existing = db.query(Category).filter(Category.slug == cat_data["slug"]).first()
-    if existing:
-        categories[cat_data["slug"]] = existing
-        print(f"✓ Categoría '{cat_data['name']}' ya existe")
-    else:
-        category = Category(**cat_data)
-        db.add(category)
-        db.flush()
-        categories[cat_data["slug"]] = category
-        print(f"✅ Categoría '{cat_data['name']}' creada")
 
-db.commit()
+def crear_productos(token):
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
 
-print("\n📦 Creando productos...")
-print("=" * 60)
+    productos = [
+        # 🔌 TECNOLOGÍA (1)
+        {
+            "name": "iPhone 15 Pro Max",
+            "slug": "iphone-15-pro-max",
+            "description": "Smartphone Apple con pantalla de 6.7 pulgadas, chip A17 Pro y cámara de 48MP",
+            "price": 1299.99,
+            "stock": 50,
+            "category_id": 1,
+            "image_url": "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=500"
+        },
+        {
+            "name": "MacBook Pro M3",
+            "slug": "macbook-pro-m3",
+            "description": "Laptop profesional con chip M3, 16GB RAM y pantalla Retina",
+            "price": 2499.99,
+            "stock": 30,
+            "category_id": 1,
+            "image_url": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500"
+        },
+        {
+            "name": "AirPods Pro",
+            "slug": "airpods-pro",
+            "description": "Auriculares inalámbricos con cancelación de ruido activa",
+            "price": 249.99,
+            "stock": 100,
+            "category_id": 1,
+            "image_url": "https://images.unsplash.com/photo-1606841837239-c5a1a4a07af7?w=500"
+        },
+        {
+            "name": "iPad Air",
+            "slug": "ipad-air",
+            "description": "Tablet Apple con pantalla de 10.9 pulgadas y chip M1",
+            "price": 599.99,
+            "stock": 45,
+            "category_id": 1,
+            "image_url": "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=500"
+        },
+        {
+            "name": "Apple Watch Series 9",
+            "slug": "apple-watch-9",
+            "description": "Smartwatch con monitoreo de salud y GPS integrado",
+            "price": 399.99,
+            "stock": 60,
+            "category_id": 1,
+            "image_url": "https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=500"
+        },
 
-# Crear productos
-products_data = [
-    # Electrónica
-    {
-        "name": "Laptop HP Pavilion 15",
-        "slug": "laptop-hp-pavilion-15",
-        "description": "Laptop potente con procesador Intel Core i7, 16GB RAM, 512GB SSD",
-        "price": 899.99,
-        "compare_price": 1099.99,
-        "stock": 15,
-        "sku": "LAP-HP-001",
-        "category_id": categories["electronica"].id,
-        "is_featured": True,
-        "image_url": "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=500"
-    },
-    {
-        "name": "iPhone 15 Pro",
-        "slug": "iphone-15-pro",
-        "description": "El último iPhone con chip A17 Pro y cámara de 48MP",
-        "price": 1199.99,
-        "compare_price": 1299.99,
-        "stock": 25,
-        "sku": "PHO-IP-001",
-        "category_id": categories["electronica"].id,
-        "is_featured": True,
-        "image_url": "https://images.unsplash.com/photo-1592286927505-5c2c2f8a1f85?w=500"
-    },
-    {
-        "name": "Auriculares Sony WH-1000XM5",
-        "slug": "auriculares-sony-wh1000xm5",
-        "description": "Auriculares con cancelación de ruido premium",
-        "price": 349.99,
-        "stock": 30,
-        "sku": "AUD-SON-001",
-        "category_id": categories["electronica"].id,
-        "image_url": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500"
-    },
-    {
-        "name": "Tablet Samsung Galaxy Tab S9",
-        "slug": "tablet-samsung-galaxy-s9",
-        "description": "Tablet Android de 11 pulgadas con S Pen incluido",
-        "price": 649.99,
-        "stock": 20,
-        "sku": "TAB-SAM-001",
-        "category_id": categories["electronica"].id,
-        "image_url": "https://images.unsplash.com/photo-1561154464-82e9adf32764?w=500"
-    },
+        # 👕 ROPA Y MODA (2)
+        {
+            "name": "Chaqueta de Cuero",
+            "slug": "chaqueta-cuero",
+            "description": "Chaqueta estilo biker de cuero genuino",
+            "price": 299.99,
+            "stock": 25,
+            "category_id": 2,
+            "image_url": "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500"
+        },
+        {
+            "name": "Zapatillas Nike Air Max",
+            "slug": "nike-air-max",
+            "description": "Zapatillas deportivas con amortiguación Air",
+            "price": 159.99,
+            "stock": 80,
+            "category_id": 2,
+            "image_url": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500"
+        },
+        {
+            "name": "Jeans Levi's 501",
+            "slug": "levis-501",
+            "description": "Jeans clásicos de corte recto",
+            "price": 89.99,
+            "stock": 120,
+            "category_id": 2,
+            "image_url": "https://images.unsplash.com/photo-1542272454315-7f6fabf313a3?w=500"
+        },
+        {
+            "name": "Reloj Casio G-Shock",
+            "slug": "casio-gshock",
+            "description": "Reloj resistente al agua y golpes",
+            "price": 129.99,
+            "stock": 40,
+            "category_id": 2,
+            "image_url": "https://images.unsplash.com/photo-1587836374828-4dbafa94cf0e?w=500"
+        },
+        {
+            "name": "Gafas Ray-Ban",
+            "slug": "rayban",
+            "description": "Gafas de sol clásicas con protección UV",
+            "price": 179.99,
+            "stock": 55,
+            "category_id": 2,
+            "image_url": "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=500"
+        },
 
-    # Ropa
-    {
-        "name": "Camiseta Básica Negra",
-        "slug": "camiseta-basica-negra",
-        "description": "Camiseta 100% algodón, corte regular",
-        "price": 19.99,
-        "compare_price": 29.99,
-        "stock": 100,
-        "sku": "CAM-BAS-001",
-        "category_id": categories["ropa"].id,
-        "image_url": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500"
-    },
-    {
-        "name": "Jeans Levi's 501",
-        "slug": "jeans-levis-501",
-        "description": "Jeans clásicos de corte recto",
-        "price": 89.99,
-        "stock": 50,
-        "sku": "JEA-LEV-001",
-        "category_id": categories["ropa"].id,
-        "is_featured": True,
-        "image_url": "https://images.unsplash.com/photo-1542272454315-7f6d6a9a9d8f?w=500"
-    },
-    {
-        "name": "Zapatillas Nike Air Max",
-        "slug": "zapatillas-nike-air-max",
-        "description": "Zapatillas deportivas con tecnología Air",
-        "price": 129.99,
-        "stock": 40,
-        "sku": "ZAP-NIK-001",
-        "category_id": categories["ropa"].id,
-        "image_url": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500"
-    },
+        # 🏠 HOGAR (3)
+        {
+            "name": "Cafetera Nespresso",
+            "slug": "cafetera-nespresso",
+            "description": "Cafetera de cápsulas con sistema de presión",
+            "price": 199.99,
+            "stock": 35,
+            "category_id": 3,
+            "image_url": "https://images.unsplash.com/photo-1517668808822-9ebb02f2a0e6?w=500"
+        },
+        {
+            "name": "Aspiradora Dyson",
+            "slug": "dyson-v15",
+            "description": "Aspiradora sin cable con detección de partículas",
+            "price": 649.99,
+            "stock": 20,
+            "category_id": 3,
+            "image_url": "https://images.unsplash.com/photo-1558317374-067fb5f30001?w=500"
+        },
+        {
+            "name": "Licuadora Vitamix",
+            "slug": "vitamix",
+            "description": "Licuadora profesional de alta potencia",
+            "price": 449.99,
+            "stock": 28,
+            "category_id": 3,
+            "image_url": "https://images.unsplash.com/photo-1585515320310-259814833e62?w=500"
+        },
+        {
+            "name": "Lámpara LED",
+            "slug": "lampara-led",
+            "description": "Lámpara inteligente con control por app",
+            "price": 49.99,
+            "stock": 90,
+            "category_id": 3,
+            "image_url": "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=500"
+        },
+        {
+            "name": "Sartén Antiadherente",
+            "slug": "sarten",
+            "description": "Sartén profesional de 28cm",
+            "price": 39.99,
+            "stock": 75,
+            "category_id": 3,
+            "image_url": "https://images.unsplash.com/photo-1556909172-54557c7e4fb7?w=500"
+        },
 
-    # Hogar
-    {
-        "name": "Cafetera Nespresso",
-        "slug": "cafetera-nespresso",
-        "description": "Cafetera de cápsulas automática",
-        "price": 199.99,
-        "stock": 25,
-        "sku": "CAF-NES-001",
-        "category_id": categories["hogar"].id,
-        "image_url": "https://images.unsplash.com/photo-1517668808822-9ebb02f2a0e6?w=500"
-    },
-    {
-        "name": "Aspiradora Dyson V15",
-        "slug": "aspiradora-dyson-v15",
-        "description": "Aspiradora inalámbrica con tecnología láser",
-        "price": 599.99,
-        "compare_price": 699.99,
-        "stock": 15,
-        "sku": "ASP-DYS-001",
-        "category_id": categories["hogar"].id,
-        "is_featured": True,
-        "image_url": "https://images.unsplash.com/photo-1558317374-067fb5f30001?w=500"
-    },
-    {
-        "name": "Lámpara LED Inteligente",
-        "slug": "lampara-led-inteligente",
-        "description": "Lámpara con control por app y cambio de color",
-        "price": 49.99,
-        "stock": 60,
-        "sku": "LAM-LED-001",
-        "category_id": categories["hogar"].id,
-        "image_url": "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=500"
-    },
+        # 🏀 DEPORTES (4)
+        {
+            "name": "Bicicleta Trek",
+            "slug": "bicicleta-trek",
+            "description": "Bicicleta de montaña con suspensión completa",
+            "price": 1299.99,
+            "stock": 15,
+            "category_id": 4,
+            "image_url": "https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?w=500"
+        },
+        {
+            "name": "Mancuernas Ajustables",
+            "slug": "mancuernas",
+            "description": "Set de mancuernas de 5 a 25 kg",
+            "price": 199.99,
+            "stock": 42,
+            "category_id": 4,
+            "image_url": "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=500"
+        },
+        {
+            "name": "Yoga Mat",
+            "slug": "yoga-mat",
+            "description": "Tapete antideslizante para yoga y pilates",
+            "price": 39.99,
+            "stock": 110,
+            "category_id": 4,
+            "image_url": "https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=500"
+        },
+        {
+            "name": "Pelota Nike",
+            "slug": "balon-nike",
+            "description": "Balón de fútbol tamaño oficial",
+            "price": 29.99,
+            "stock": 85,
+            "category_id": 4,
+            "image_url": "https://images.unsplash.com/photo-1614632537423-1e6c2e7e0aab?w=500"
+        },
+        {
+            "name": "Raqueta Wilson",
+            "slug": "raqueta-wilson",
+            "description": "Raqueta de tenis profesional",
+            "price": 179.99,
+            "stock": 32,
+            "category_id": 4,
+            "image_url": "https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=500"
+        },
 
-    # Deportes
-    {
-        "name": "Bicicleta de Montaña",
-        "slug": "bicicleta-montana",
-        "description": "Bicicleta MTB con suspensión completa",
-        "price": 799.99,
-        "stock": 10,
-        "sku": "BIC-MTB-001",
-        "category_id": categories["deportes"].id,
-        "image_url": "https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?w=500"
-    },
-    {
-        "name": "Mancuernas Ajustables 20kg",
-        "slug": "mancuernas-ajustables-20kg",
-        "description": "Set de mancuernas con peso ajustable",
-        "price": 149.99,
-        "stock": 35,
-        "sku": "MAN-ADJ-001",
-        "category_id": categories["deportes"].id,
-        "image_url": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500"
-    },
+        # 📚 LIBROS (5)
+        {
+            "name": "Sapiens",
+            "slug": "sapiens",
+            "description": "De animales a dioses - Yuval Noah Harari",
+            "price": 19.99,
+            "stock": 150,
+            "category_id": 5,
+            "image_url": "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500"
+        },
+        {
+            "name": "El Señor de los Anillos",
+            "slug": "lotr",
+            "description": "Trilogía completa de fantasía épica - J.R.R. Tolkien",
+            "price": 29.99,
+            "stock": 95,
+            "category_id": 5,
+            "image_url": "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=500"
+        },
+        {
+            "name": "Atomic Habits",
+            "slug": "atomic-habits",
+            "description": "Cómo crear buenos hábitos - James Clear",
+            "price": 18.99,
+            "stock": 200,
+            "category_id": 5,
+            "image_url": "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?w=500"
+        },
+        {
+            "name": "1984",
+            "slug": "1984",
+            "description": "Novela distópica - George Orwell",
+            "price": 14.99,
+            "stock": 180,
+            "category_id": 5,
+            "image_url": "https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=500"
+        },
+        {
+            "name": "Clean Code",
+            "slug": "clean-code",
+            "description": "Manual de desarrollo ágil de software - Robert C. Martin",
+            "price": 39.99,
+            "stock": 65,
+            "category_id": 5,
+            "image_url": "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=500"
+        },
+    ]
 
-    # Libros
-    {
-        "name": "El Señor de los Anillos - Trilogía",
-        "slug": "senor-anillos-trilogia",
-        "description": "Edición especial de la trilogía completa",
-        "price": 49.99,
-        "stock": 45,
-        "sku": "LIB-LOTR-001",
-        "category_id": categories["libros"].id,
-        "image_url": "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=500"
-    },
-    {
-        "name": "Sapiens - Yuval Noah Harari",
-        "slug": "sapiens-yuval-harari",
-        "description": "De animales a dioses: Breve historia de la humanidad",
-        "price": 24.99,
-        "stock": 50,
-        "sku": "LIB-SAP-001",
-        "category_id": categories["libros"].id,
-        "is_featured": True,
-        "image_url": "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500"
-    },
-]
+    print("\n📦 Creando productos...")
+    ok, fail = 0, 0
 
-for prod_data in products_data:
-    existing = db.query(Product).filter(Product.slug == prod_data["slug"]).first()
-    if existing:
-        print(f"  ⚠️  '{prod_data['name']}' ya existe")
-    else:
-        product = Product(**prod_data)
-        db.add(product)
-        featured = "⭐" if prod_data.get("is_featured") else "  "
-        print(f"  ✅ {featured} '{prod_data['name']}' - ${prod_data['price']}")
+    for p in productos:
+        r = requests.post(f"{API_BASE}/products/", json=p, headers=headers)
+        if r.status_code in (200, 201):
+            print(f"✅ {p['name']}")
+            ok += 1
+        else:
+            print(f"❌ {p['name']} -> {r.text}")
+            fail += 1
 
-db.commit()
+    print("\n✨ RESUMEN")
+    print(f"✅ Exitosos: {ok}")
+    print(f"❌ Errores: {fail}")
 
-print("\n" + "=" * 60)
-print("✨ ¡Productos creados exitosamente!")
-print(f"📊 Total de productos: {db.query(Product).count()}")
-print(f"📂 Total de categorías: {db.query(Category).count()}")
-print("=" * 60)
 
-db.close()
+if __name__ == "__main__":
+    token = login()
+    crear_productos(token)
